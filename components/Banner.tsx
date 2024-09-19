@@ -70,7 +70,7 @@ const Banner = () => {
         {/* Paragraph with Smooth Opacity */}
         <p className="mb-8 max-w-5xl text-center leading-loose text-xl font-semibold sm:text-xl md:text-2xl drop-shadow transition-opacity duration-700 ease-out hover:opacity-95">
           Join a community dedicated to fitness and transformation. Whether
-          you're looking to lose weight, build strength, or improve your health,
+          you are looking to lose weight, build strength, or improve your health,
           we offer the tools and support to help you succeed. Start your journey
           today with us.
         </p>

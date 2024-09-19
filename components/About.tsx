@@ -107,7 +107,7 @@ const About = () => {
               to be the best version of themselves. At BodyStation Fitness Gym,
               we pride ourselves on offering state-of-the-art facilities,
               cutting-edge equipment, and a diverse range of programs tailored
-              to meet your unique needs. Whether you're looking to build
+              to meet your unique needs. Whether you are looking to build
               strength, improve your cardio, or find balance with yoga, our
               certified trainers are here to guide you every step of the way.
             </p>
