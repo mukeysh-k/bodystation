@@ -18,12 +18,15 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Dumbbell, Mail, MapPin, Phone } from "lucide-react";
+import Banner from "./Banner";
+import About from "./About";
 
 export default function HomeComponent() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Banner */}
-      <section
+      <Banner />
+      {/* <section
         className="relative h-[60vh] bg-cover bg-center flex items-center justify-center"
         style={{
           backgroundImage: "url('/placeholder.svg?height=600&width=1200')",
@@ -34,40 +37,13 @@ export default function HomeComponent() {
           <h1 className="text-5xl font-bold mb-4">FitLife Gym</h1>
           <p className="text-xl">Your Journey to a Healthier You Starts Here</p>
         </div>
-      </section>
+      </section> */}
 
       {/* About Gym */}
-      <section className="py-16 bg-gray-100">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-8 text-center">About Our Gym</h2>
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="md:w-1/2">
-              <img
-                src="/placeholder.svg?height=400&width=600"
-                alt="Gym Interior"
-                className="rounded-lg shadow-lg"
-              />
-            </div>
-            <div className="md:w-1/2">
-              <p className="text-lg mb-4">
-                FitLife Gym is dedicated to helping you achieve your fitness
-                goals in a supportive and motivating environment. Our
-                state-of-the-art facilities and expert trainers are here to
-                guide you every step of the way.
-              </p>
-              <p className="text-lg mb-4">
-                Whether you are a beginner or an experienced athlete, we
-                have the equipment and classes to suit your needs. Join us and
-                become part of a community committed to health and wellness.
-              </p>
-              <Button>Learn More</Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <About />
 
       {/* Gym Schedule */}
-      <section className="py-16">
+      {/* <section className="py-16">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-8 text-center">Gym Schedule</h2>
           <Table>
@@ -120,7 +96,7 @@ export default function HomeComponent() {
       </section>
 
       {/* Fee Plans */}
-      <section className="py-16 bg-gray-100">
+      {/* <section className="py-16 bg-gray-100">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-8 text-center">
             Membership Plans
@@ -148,10 +124,10 @@ export default function HomeComponent() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Contact Us */}
-      <section className="py-16">
+      {/* <section className="py-16">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-8 text-center">Contact Us</h2>
           <div className="flex flex-col md:flex-row gap-8">
@@ -189,10 +165,10 @@ export default function HomeComponent() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Gallery */}
-      <section className="py-16 bg-gray-100">
+      {/* <section className="py-16 bg-gray-100">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-8 text-center">Gallery</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -208,15 +184,15 @@ export default function HomeComponent() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8">
+      {/* <footer className="bg-gray-800 text-white py-8">
         <div className="container mx-auto px-4 text-center">
           <Dumbbell className="inline-block mb-4" size={32} />
           <p>&copy; 2023 FitLife Gym. All rights reserved.</p>
         </div>
-      </footer>
+      </footer> */}
     </div>
   );
 }
