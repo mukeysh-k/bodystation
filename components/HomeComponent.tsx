@@ -56,7 +56,7 @@ export default function HomeComponent() {
                 guide you every step of the way.
               </p>
               <p className="text-lg mb-4">
-                Whether you&apos;re a beginner or an experienced athlete, we
+                Whether you are a beginner or an experienced athlete, we
                 have the equipment and classes to suit your needs. Join us and
                 become part of a community committed to health and wellness.
               </p>
