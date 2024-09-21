@@ -8,9 +8,8 @@ const OwnerInfo = () => {
   const ownerData = {
     name: "Ankush Dhalla",
     bio: `With over 10 years of experience in the fitness industry, <strong className='text-yellow-400'>Ankush Dhalla</strong> brings a wealth of knowledge and passion to BodyStation The Fitness Gym. A former competitive wrestler and a certified fitness trainer, <strong className='text-yellow-400'>Ankush Dhalla</strong> has dedicated his life to helping others achieve their health and fitness goals.`,
-    email: "ankushdhalla@gmail.com",
-    phone: "987666665",
-
+    email: "ankushdhalla.dhalla@gmail.com",
+    phone: "9805599020",
   };
 
   return (

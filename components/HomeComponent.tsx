@@ -1,3 +1,4 @@
+"use client"
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,6 +20,8 @@ import {
 import Banner from "./Banner";
 import About from "./About";
 import OwnerInfo from "./AboutOwner";
+import TrainingPrices from "./TrainingPrices";
+import Plans from "./Plans";
 
 export default function HomeComponent() {
   return (
@@ -42,6 +45,8 @@ export default function HomeComponent() {
       <About />
 
       <OwnerInfo />
+      <TrainingPrices />
+      <Plans />
 
       {/* Gym Schedule */}
       {/* <section className="py-16">

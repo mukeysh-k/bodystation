@@ -62,7 +62,7 @@ const Banner = () => {
         className="relative z-10 flex h-full flex-col items-center justify-center text-white p-5"
       >
         {/* Heading with Smooth Scale */}
-        <h1 className="mb-4 font-bold tracking-tight text-3xl sm:text-4xl md:text-6xl lg:text-7xl drop-shadow transform transition-transform duration-700 ease-out hover:scale-105">
+        <h1 className="mb-4 text-center font-bold tracking-tight text-3xl sm:text-4xl md:text-5xl lg:text-6xl drop-shadow transform transition-transform duration-700 ease-out hover:scale-105">
           Your <span className="text-yellow-400">Fitness</span> Journey Starts
           Here
         </h1>
