@@ -22,6 +22,7 @@ import About from "./About";
 import OwnerInfo from "./AboutOwner";
 import TrainingPrices from "./TrainingPrices";
 import Plans from "./Plans";
+import Map from "./Map";
 
 export default function HomeComponent() {
   return (
@@ -47,6 +48,7 @@ export default function HomeComponent() {
       <OwnerInfo />
       <TrainingPrices />
       <Plans />
+      <Map />
 
       {/* Gym Schedule */}
       {/* <section className="py-16">
