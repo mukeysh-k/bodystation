@@ -16,10 +16,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import { Dumbbell, Mail, MapPin, Phone } from "lucide-react";
 import Banner from "./Banner";
 import About from "./About";
+import OwnerInfo from "./AboutOwner";
 
 export default function HomeComponent() {
   return (
@@ -41,6 +40,8 @@ export default function HomeComponent() {
 
       {/* About Gym */}
       <About />
+
+      <OwnerInfo />
 
       {/* Gym Schedule */}
       {/* <section className="py-16">
