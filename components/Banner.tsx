@@ -3,7 +3,8 @@ import React, { useEffect, useRef } from "react";
 import { FaDumbbell } from "react-icons/fa";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-
+import logo from "../public/logo.jpg";
+import Image from "next/image";
 gsap.registerPlugin(ScrollTrigger);
 
 const Banner = () => {
@@ -43,6 +44,9 @@ const Banner = () => {
   return (
     <div className="relative h-screen w-full overflow-hidden">
       {/* Background Image with Smooth Parallax */}
+      <div className="container mx-auto">
+        <Image src={logo} alt="logo" className="w-52 relative z-50" />
+      </div>
       <div
         ref={backgroundRef}
         className="absolute inset-0 bg-cover bg-center transform-gpu"
@@ -69,9 +73,9 @@ const Banner = () => {
 
         {/* Paragraph with Smooth Opacity */}
         <p className="mb-8 max-w-5xl text-center leading-loose text-xl font-semibold sm:text-xl md:text-2xl drop-shadow transition-opacity duration-700 ease-out hover:opacity-95">
-          Join a community dedicated to fitness and transformation. Whether
-          you are looking to lose weight, build strength, or improve your health,
-          we offer the tools and support to help you succeed. Start your journey
+          Join a community dedicated to fitness and transformation. Whether you
+          are looking to lose weight, build strength, or improve your health, we
+          offer the tools and support to help you succeed. Start your journey
           today with us.
         </p>
 

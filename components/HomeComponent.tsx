@@ -46,8 +46,9 @@ export default function HomeComponent() {
       <About />
 
       <OwnerInfo />
-      <TrainingPrices />
       <Plans />
+      <TrainingPrices />
+
       <Map />
 
       {/* Gym Schedule */}
