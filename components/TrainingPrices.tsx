@@ -37,10 +37,10 @@ export default function TrainingPrices() {
   }, []);
 
   return (
-    <div className="text-white container mx-auto px-4 py-10 text-center">
+    <div id="pt" className="text-white container mx-auto px-4 py-10 text-center">
       <p className="text-base text-white">Training Prices</p>
       <h2 className="text-3xl font-semibold mt-2 text-white mb-6">
-        Book Your Personal Trainings
+        Book Your <span className="text-yellow-400">Personal Trainings</span>
       </h2>
       <Card
         ref={cardRef}

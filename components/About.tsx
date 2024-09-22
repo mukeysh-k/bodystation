@@ -71,17 +71,9 @@ const About = () => {
   }, []);
 
   return (
-    <section className="py-16 relative">
-      {/* Parallax background effect */}
-      {/* <div
-        className="absolute inset-0 bg-fixed bg-cover bg-center opacity-30 z-0"
-        style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1583454110558-4d63407b68cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80')",
-        }}
-      ></div> */}
-      <div className="container mx-auto px-4 text-white relative z-10">
-        <h2 ref={headingRef} className="text-4xl font-bold mb-8 text-center">
+    <section className="py-10 relative">
+      <div id="about" className="container mx-auto px-4 text-white relative z-10">
+        <h2 ref={headingRef} className="text-4xl font-bold mb-8 text-center pt-6">
           <span className="text-yellow-400">About</span> Our Gym
         </h2>
         <div className="flex flex-col md:flex-row items-center gap-12">
