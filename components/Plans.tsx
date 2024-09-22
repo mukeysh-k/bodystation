@@ -241,9 +241,12 @@ export default function Plans() {
                 <div className="space-y-2">
                   {plan.perks.map((perk, perkIndex) => (
                     // Loop through both text and icons arrays together
-                    <div key={perkIndex}>
+                    <div key={`perk-${perkIndex}`}>
                       {perk.icons.map((icon, iconIndex) => (
-                        <div key={iconIndex} className="flex items-center">
+                        <div
+                          key={`icon-${perkIndex}-${iconIndex}`}
+                          className="flex items-center"
+                        >
                           {icon}
                           <span className="text-sm">
                             {perk.text[iconIndex]}
