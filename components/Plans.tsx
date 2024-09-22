@@ -16,7 +16,6 @@ import {
   GraduationCap,
   ShowerHead,
   HeartPulse,
-  CoffeeIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -29,16 +28,13 @@ const plans = [
     perks: [
       {
         text: ["Free Coffee Shot", "Free Wi-Fi"],
-        icons: [
-          <Coffee className="h-4 w-4 mr-2" />,
-          <Wifi className="h-4 w-4 mr-2 text-white" />,
-        ],
+        icons: ["coffee", "wifi"], // Icon names as strings
       },
     ],
     benefit:
       "No commitment. Pay as you go, with a refreshing coffee shot to start your workout.",
     discount: null,
-    icon: <Coffee className="h-4 w-4 mr-2" />,
+    icon: "coffee", // Icon name as string
     gradient: "bg-gradient-to-br from-red-800 to-pink-600",
   },
   {
@@ -49,16 +45,13 @@ const plans = [
     perks: [
       {
         text: ["Free Coffee Shot", "Free Wi-Fi"],
-        icons: [
-          <Coffee className="h-4 w-4 mr-2" />,
-          <Wifi className="h-4 w-4 mr-2 text-white" />,
-        ],
+        icons: ["coffee", "wifi"], // Icon names as strings
       },
     ],
     benefit:
       "A special student price with access to all gym facilities, including personalized plans, Wi-Fi, and a coffee boost.",
     discount: "Valid Student ID Required",
-    icon: <GraduationCap className="h-4 w-4 mr-2" />,
+    icon: "graduation-cap", // Icon name as string
     gradient: "bg-gradient-to-br from-cyan-800 to-sky-600",
   },
   {
@@ -69,17 +62,13 @@ const plans = [
     perks: [
       {
         text: ["1 Free Steam Bath", "Free Coffee Shot", "Free Wi-Fi"],
-        icons: [
-          <ShowerHead className="h-4 w-4 mr-2 text-white" />,
-          <Coffee className="h-4 w-4 mr-2" />,
-          <Wifi className="h-4 w-4 mr-2 text-white" />,
-        ],
+        icons: ["ShowerHead", "coffee", "wifi"], // Icon names as strings
       },
     ],
     benefit:
       "Access to all gym facilities, personalized workout plans, and a relaxing steam bath to help you unwind.",
     discount: "10% Discount",
-    icon: <Droplet className="h-4 w-4 mr-2" />,
+    icon: "droplet", // Icon name as string
     gradient: "bg-gradient-to-br from-blue-800 to-indigo-600",
   },
   {
@@ -90,17 +79,13 @@ const plans = [
     perks: [
       {
         text: ["3 Free Steam Bath", "Free Coffee Shot", "Free Wi-Fi"],
-        icons: [
-          <ShowerHead className="h-4 w-4 mr-2 text-white" />,
-          <Coffee className="h-4 w-4 mr-2" />,
-          <Wifi className="h-4 w-4 mr-2 text-white" />,
-        ],
+        icons: ["ShowerHead", "coffee", "wifi"], // Icon names as strings
       },
     ],
     benefit:
       "Significant savings, personalized training plan, and regular steam baths to relax your muscles after intense sessions.",
     discount: "10% Discount",
-    icon: <Activity className="h-4 w-4 mr-2" />,
+    icon: "activity", // Icon name as string
     gradient: "bg-gradient-to-br from-green-800 to-emerald-600",
   },
   {
@@ -111,17 +96,13 @@ const plans = [
     perks: [
       {
         text: ["9 Free Steam Bath", "Free Coffee Shot", "Free Wi-Fi"],
-        icons: [
-          <ShowerHead className="h-4 w-4 mr-2 text-white" />,
-          <Coffee className="h-4 w-4 mr-2" />,
-          <Wifi className="h-4 w-4 mr-2 text-white" />,
-        ],
+        icons: ["ShowerHead", "coffee", "wifi"], // Icon names as strings
       },
     ],
     benefit:
       "Enjoy a 20% discount, personalized workout plans, health monitoring, and monthly steam baths for recovery and relaxation.",
     discount: "20% Discount",
-    icon: <Activity className="h-4 w-4 mr-2" />,
+    icon: "activity", // Icon name as string
     gradient: "bg-gradient-to-br from-purple-800 to-fuchsia-600",
   },
   {
@@ -137,18 +118,13 @@ const plans = [
           "Free Coffee Shot",
           "Free Wi-Fi",
         ],
-        icons: [
-          <ShowerHead className="h-4 w-4 mr-2 text-white" />,
-          <HeartPulse className="h-4 w-4 mr-2" />,
-          <Coffee className="h-4 w-4 mr-2" />,
-          <Wifi className="h-4 w-4 mr-2 text-white" />,
-        ],
+        icons: ["ShowerHead", "HeartPulse", "coffee", "wifi"], // Icon names as strings
       },
     ],
     benefit:
       "Maximum savings with 30% off, regular steam baths, health checkups, and full access to all gym services, including Wi-Fi.",
     discount: "30% Discount",
-    icon: <Activity className="h-4 w-4 mr-2" />,
+    icon: "activity", // Icon name as string
     gradient: "bg-gradient-to-br from-amber-700 to-orange-600",
     popular: true,
   },
@@ -165,18 +141,13 @@ const plans = [
           "Free Coffee Shot",
           "Free Wi-Fi",
         ],
-        icons: [
-          <ShowerHead className="h-4 w-4 mr-2 text-white" />,
-          <HeartPulse className="h-4 w-4 mr-2" />,
-          <Coffee className="h-4 w-4 mr-2" />,
-          <Wifi className="h-4 w-4 mr-2 text-white" />,
-        ],
+        icons: ["ShowerHead", "HeartPulse", "coffee", "wifi"], // Icon names as strings
       },
     ],
     benefit:
       "Special couple discount, shared benefits like steam baths, and full gym access for both individuals.",
     discount: "Special Discount",
-    icon: <Users className="h-4 w-4 mr-2" />,
+    icon: "users", // Icon name as string
     gradient: "bg-gradient-to-br from-pink-800 to-rose-600",
   },
   {
@@ -192,22 +163,39 @@ const plans = [
           "Free Coffee Shot",
           "Free Wi-Fi",
         ],
-        icons: [
-          <ShowerHead className="h-4 w-4 mr-2 text-white" />,
-          <HeartPulse className="h-4 w-4 mr-2" />,
-          <Coffee className="h-4 w-4 mr-2" />,
-          <Wifi className="h-4 w-4 mr-2 text-white" />,
-        ],
+        icons: ["ShowerHead", "HeartPulse", "coffee", "wifi"], // Icon names as strings
       },
     ],
     benefit:
       "A comprehensive fitness plan for the entire family with shared perks like steam baths and free Wi-Fi for everyone.",
     discount: "Special Offer",
-    icon: <Users className="h-4 w-4 mr-2" />,
+    icon: "users", // Icon name as string
     gradient: "bg-gradient-to-br from-teal-800 to-emerald-600",
   },
 ];
 
+const getIcon = (iconName: string) => {
+  switch (iconName) {
+    case "coffee":
+      return <Coffee className="h-4 w-4 mr-2" />;
+    case "wifi":
+      return <Wifi className="h-4 w-4 mr-2" />;
+    case "users":
+      return <Users className="h-4 w-4 mr-2" />;
+    case "ShowerHead":
+      return <ShowerHead className="h-4 w-4 mr-2" />;
+    case "HeartPulse":
+      return <HeartPulse className="h-4 w-4 mr-2" />;
+    case "graduation-cap":
+      return <GraduationCap className="h-4 w-4 mr-2" />;
+    case "droplet":
+      return <Droplet className="h-4 w-4 mr-2" />;
+    case "activity":
+      return <Activity className="h-4 w-4 mr-2" />;
+    default:
+      return null;
+  }
+};
 export default function Plans() {
   return (
     <div id="plan" className="min-h-screen text-white py-12">
@@ -229,7 +217,8 @@ export default function Plans() {
               )}
               <CardHeader>
                 <CardTitle className="flex items-center text-xl">
-                  {plan.icon}
+                  {getIcon(plan.icon)}{" "}
+                  {/* Use the getIcon function for plan icons */}
                   {plan.title}
                 </CardTitle>
                 <CardDescription className="text-white text-lg font-semibold">
@@ -242,12 +231,12 @@ export default function Plans() {
                   {plan.perks.map((perk, perkIndex) => (
                     // Loop through both text and icons arrays together
                     <div key={`perk-${perkIndex}`}>
-                      {perk.icons.map((icon, iconIndex) => (
+                      {perk.icons.map((iconName, iconIndex) => (
                         <div
                           key={`icon-${perkIndex}-${iconIndex}`}
                           className="flex items-center"
                         >
-                          {icon}
+                          {getIcon(iconName)} {/* Use the getIcon function */}
                           <span className="text-sm">
                             {perk.text[iconIndex]}
                           </span>
