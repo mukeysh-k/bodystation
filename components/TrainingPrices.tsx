@@ -46,10 +46,12 @@ export default function TrainingPrices() {
       );
     }
   }, []);
-  const [isMobile, setIsMobile] = useState(false);;
+  const [isMobile, setIsMobile] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsMobile(isMobileDevice());
+      setIsIOS(/iPhone|iPad|iPod/i.test(navigator.userAgent));
     }
   }, []);
   return (
@@ -85,10 +87,10 @@ export default function TrainingPrices() {
             <FeatureItem icon={MessageCircle} text="Free Support and Advice" />
             <FeatureItem icon={Activity} text="Health Monitoring" />
           </ul>
-          {isMobile ? (
+          {isMobile && !isIOS ? (
             <Link
               href={generateGpayLink('6000')}
-              className="bg-white text-black py-2 px-4 rounded-lg hover:bg-white/90"
+              className="bg-yellow-400 text-black py-4 px-8 rounded-lg block mt-10"
               target="_blank"
               rel="noopener noreferrer"
             >

@@ -219,7 +219,9 @@ export default function Plans() {
     if (typeof window !== "undefined") {
       setIsMobile(isMobileDevice());
     }
+    console.log(isIOS);
   },[])
+
   return (
     <div id="plan" className="min-h-screen text-white py-12">
       <div className="container mx-auto px-4">
