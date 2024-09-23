@@ -7,10 +7,21 @@ import {
   MessageCircle,
   Activity,
 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { generateGpayLink, isMobileDevice } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-
+import { QRCodeCanvas } from "qrcode.react";
+import Link from "next/link";
+import { Button } from "./ui/button";
 gsap.registerPlugin(ScrollTrigger);
 
 export default function TrainingPrices() {
@@ -35,9 +46,17 @@ export default function TrainingPrices() {
       );
     }
   }, []);
-
+  const [isMobile, setIsMobile] = useState(false);;
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsMobile(isMobileDevice());
+    }
+  }, []);
   return (
-    <div id="pt" className="text-white container mx-auto px-4 py-10 text-center">
+    <div
+      id="pt"
+      className="text-white container mx-auto px-4 py-10 text-center"
+    >
       <p className="text-base text-white">Training Prices</p>
       <h2 className="text-3xl font-semibold mt-2 text-white mb-6">
         Book Your <span className="text-yellow-400">Personal Trainings</span>
@@ -66,6 +85,42 @@ export default function TrainingPrices() {
             <FeatureItem icon={MessageCircle} text="Free Support and Advice" />
             <FeatureItem icon={Activity} text="Health Monitoring" />
           </ul>
+          {isMobile ? (
+            <Link
+              href={generateGpayLink('6000')}
+              className="bg-white text-black py-2 px-4 rounded-lg hover:bg-white/90"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Pay with Google Pay
+            </Link>
+          ) : (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="secondary"
+                  className="bg-white text-black hover:bg-white/90"
+                >
+                  Pay Now
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md bg-white">
+                <DialogHeader>
+                  <DialogTitle>Scan QR Code to Pay</DialogTitle>
+                  <DialogDescription>
+                    Use your mobile device to scan this QR code and complete the
+                    payment for the Personal Training plan.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex items-center justify-center p-6">
+                  <QRCodeCanvas
+                    value={generateGpayLink("6000")}
+                    size={256}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </CardContent>
       </Card>
     </div>

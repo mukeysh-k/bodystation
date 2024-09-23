@@ -18,6 +18,17 @@ import {
   HeartPulse,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { generateGpayLink, isMobileDevice } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { QRCodeCanvas } from "qrcode.react";
+import { useEffect, useState } from "react";
 
 const plans = [
   {
@@ -173,7 +184,6 @@ const plans = [
     gradient: "bg-gradient-to-br from-teal-800 to-emerald-600",
   },
 ];
-
 const getIcon = (iconName: string) => {
   switch (iconName) {
     case "coffee":
@@ -196,7 +206,18 @@ const getIcon = (iconName: string) => {
       return null;
   }
 };
+
 export default function Plans() {
+  const [isMobile, setIsMobile] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const handleOpenQRCode = (plan: any) => {
+    setSelectedPlan(plan);
+  };
+  useEffect(()=> {
+    if (typeof window !== "undefined") {
+      setIsMobile(isMobileDevice());
+    }
+  },[])
   return (
     <div id="plan" className="min-h-screen text-white py-12">
       <div className="container mx-auto px-4">
@@ -249,12 +270,49 @@ export default function Plans() {
                 <p className="text-sm text-white">{plan.benefit}</p>
               </CardContent>
               <CardFooter className="flex justify-between items-center">
-                <Button
+                {isMobile ? (
+                  <a
+                    href={generateGpayLink(plan.price)}
+                    className="bg-white text-black py-2 px-4 rounded-lg hover:bg-white/90"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Pay with Google Pay
+                  </a>
+                ) : (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        className="bg-white text-black hover:bg-white/90"
+                        onClick={() => handleOpenQRCode(plan)}
+                      >
+                        Pay Now
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md bg-white">
+                      <DialogHeader>
+                        <DialogTitle>Scan QR Code to Pay</DialogTitle>
+                        <DialogDescription>
+                          Use your mobile device to scan this QR code and
+                          complete the payment for the {plan.title} plan.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex items-center justify-center p-6">
+                        <QRCodeCanvas
+                          value={generateGpayLink(plan.price)}
+                          size={256}
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+                {/* <Button
                   variant="secondary"
                   className="bg-white text-black hover:bg-white/90"
                 >
                   Choose Plan
-                </Button>
+                </Button> */}
                 {plan.discount && (
                   <Badge
                     variant="outline"
