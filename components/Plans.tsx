@@ -209,9 +209,11 @@ const getIcon = (iconName: string) => {
 
 export default function Plans() {
   const [isMobile, setIsMobile] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const handleOpenQRCode = (plan: any) => {
     setSelectedPlan(plan);
+    setIsIOS(/iPhone|iPad|iPod/i.test(navigator.userAgent));
   };
   useEffect(()=> {
     if (typeof window !== "undefined") {
@@ -270,7 +272,7 @@ export default function Plans() {
                 <p className="text-sm text-white">{plan.benefit}</p>
               </CardContent>
               <CardFooter className="flex justify-between items-center">
-                {isMobile ? (
+                {isMobile && !isIOS ? (
                   <a
                     href={generateGpayLink(plan.price)}
                     className="bg-white text-black py-2 px-4 rounded-lg hover:bg-white/90"

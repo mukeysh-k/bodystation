@@ -7,10 +7,10 @@ export function cn(...inputs: ClassValue[]) {
 
 export const generateGpayLink = (amount: any) => {
   const upiId = "ankushdhalla.dhalla-2@okhdfcbank";
-  const recipientName = "Body Stattion";
+  const recipientName = "BodyStation";
   return `upi://pay?pa=${upiId}&pn=${encodeURIComponent(
     recipientName
-  )}&am=${amount.replace("₹", "").replace(",", "")}&cu=INR`;
+  )}&am=${amount}&cu=INR`;
 };
 
 export const isMobileDevice = () => {
