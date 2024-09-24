@@ -10,7 +10,7 @@ export const generateGpayLink = (amount: any) => {
   const recipientName = "BodyStation";
   return `upi://pay?pa=${upiId}&pn=${encodeURIComponent(
     recipientName
-  )}&am=${amount}&cu=INR`;
+  )}&am=${amount.replace("₹", "").replace(",", "")}&cu=INR`;
 };
 
 export const isMobileDevice = () => {

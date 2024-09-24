@@ -210,17 +210,17 @@ const getIcon = (iconName: string) => {
 export default function Plans() {
   const [isMobile, setIsMobile] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState({ price: "", title: "" });
   const handleOpenQRCode = (plan: any) => {
     setSelectedPlan(plan);
-    setIsIOS(/iPhone|iPad|iPod/i.test(navigator.userAgent));
   };
-  useEffect(()=> {
+  useEffect(() => {
     if (typeof window !== "undefined") {
       setIsMobile(isMobileDevice());
+      setIsIOS(/iPhone|iPad|iPod/i.test(navigator.userAgent));
     }
     console.log(isIOS);
-  },[])
+  }, []);
 
   return (
     <div id="plan" className="min-h-screen text-white py-12">
@@ -276,7 +276,7 @@ export default function Plans() {
               <CardFooter className="flex justify-between items-center">
                 {isMobile && !isIOS ? (
                   <a
-                    href={generateGpayLink(plan.price)}
+                    href={generateGpayLink(selectedPlan.price)}
                     className="bg-white text-black py-2 px-4 rounded-lg hover:bg-white/90"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -299,12 +299,13 @@ export default function Plans() {
                         <DialogTitle>Scan QR Code to Pay</DialogTitle>
                         <DialogDescription>
                           Use your mobile device to scan this QR code and
-                          complete the payment for the {plan.title} plan.
+                          complete the payment for the {selectedPlan.title} plan
+                          price {selectedPlan.price}.
                         </DialogDescription>
                       </DialogHeader>
                       <div className="flex items-center justify-center p-6">
                         <QRCodeCanvas
-                          value={generateGpayLink(plan.price)}
+                          value={generateGpayLink(selectedPlan.price)}
                           size={256}
                         />
                       </div>
