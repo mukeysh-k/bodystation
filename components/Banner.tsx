@@ -131,7 +131,7 @@ export default function Banner() {
           Your <span className="text-yellow-400">Fitness</span> Journey Starts
           Here
         </h1>
-        <p className="mb-8 max-w-5xl text-center leading-loose text-xl font-semibold sm:text-xl md:text-2xl drop-shadow transition-opacity duration-700 ease-out hover:opacity-95">
+        <p className="mb-8 max-w-5xl text-center text-xl font-semibold sm:text-xl md:text-2xl drop-shadow transition-opacity duration-700 ease-out hover:opacity-95">
           Join a community dedicated to fitness and transformation. Whether you
           are looking to lose weight, build strength, or improve your health, we
           offer the tools and support to help you succeed. Start your journey

@@ -88,7 +88,7 @@ const About = () => {
             </div>
           </div>
           <div ref={textRef} className="md:w-1/2">
-            <p className="text-xl mb-4 leading-loose">
+            <p className="text-xl mb-4 leading-normal">
               Welcome to{" "}
               <span className="text-yellow-400">BodyStation Fitness Gym</span>,
               the premier fitness destination in{" "}
