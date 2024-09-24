@@ -12,7 +12,7 @@ export default function Footer() {
             </h3>
             <div className="flex space-x-4">
               <Link
-                href="https://facebook.com"
+                href="https://www.facebook.com/people/Body-station-The-fitness-gym/100066601358747/"
                 target="_blank"
                 className="hover:text-blue-400"
               >
@@ -20,13 +20,12 @@ export default function Footer() {
                 <span className="sr-only">Facebook</span>
               </Link>
               <Link
-                href="https://instagram.com"
+                href="https://www.instagram.com/bodystationthefitness"
                 className="hover:text-pink-400"
                 target="_blank"
               >
                 <Instagram className="w-6 h-6" />
                 <span className="sr-only">Instagram</span>
-                
               </Link>
             </div>
           </div>
@@ -49,8 +48,8 @@ export default function Footer() {
         </div>
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
           <p>
-            &copy; {new Date().getFullYear()} Body Station The Fitness Gym. All rights
-            reserved.
+            &copy; {new Date().getFullYear()} Body Station The Fitness Gym. All
+            rights reserved.
           </p>
         </div>
       </div>
