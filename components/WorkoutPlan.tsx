@@ -38,7 +38,7 @@ const workoutPlan: WorkoutPlan = {
       "Ground Pully",
       "Bent Over Barbell Row",
       "Deadlift",
-      "Hyper Extension"
+      "Hyper Extension",
     ],
     image: "/placeholder.svg?height=300&width=300",
   },
@@ -60,7 +60,7 @@ const workoutPlan: WorkoutPlan = {
       "Both Arm Tricep Extension",
       "Dumbbell Kick Back",
       "Tricpes Dips",
-      "Skull Crusher"
+      "Skull Crusher",
     ],
     image: "/placeholder.svg?height=300&width=300",
   },
@@ -123,7 +123,7 @@ export default function WorkoutPlan() {
     }
     return {};
   });
-  const [activeTab, setActiveTab] = useState("FOREARMS");
+  const [activeTab, setActiveTab] = useState("CHEST");
   const tabsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
