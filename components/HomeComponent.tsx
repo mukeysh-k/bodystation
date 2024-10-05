@@ -25,6 +25,7 @@ import Plans from "./Plans";
 import Map from "./Map";
 import FitnessProgram from "./FitnessProgram";
 import Footer from "./Footer";
+import WorkoutPlan from "./WorkoutPlan";
 
 export default function HomeComponent() {
   return (
@@ -37,6 +38,7 @@ export default function HomeComponent() {
       <Plans />
       <FitnessProgram />
       <TrainingPrices />
+      <WorkoutPlan />
       <Map />
       <Footer />
     </div>
