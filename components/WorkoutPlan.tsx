@@ -166,7 +166,7 @@ export default function WorkoutPlan() {
   return (
     <div className="text-white container mx-auto px-4 py-10 text-center">
       <h2 className="text-4xl font-bold mb-4">
-        Gym <span className="text-yellow-400">Workout Plan</span>
+        Workout <span className="text-yellow-400">Workout Plan</span>
       </h2>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="relative">
