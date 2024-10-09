@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { GoogleAnalytics } from "@next/third-parties/google";
+
 
 const zenDots = localFont({
   src: "./fonts/ZenDots-Regular.ttf",
@@ -26,10 +28,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${zenDots.variable} ${poppins.variable} antialiased`}
-      >
+      <body className={`${zenDots.variable} ${poppins.variable} antialiased`}>
         {children}
+        <GoogleAnalytics gaId="G-QSF987Q98T" />
       </body>
     </html>
   );
