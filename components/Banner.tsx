@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import logo from "../public/logo.jpg";
+import logo from "../public/logo1.png";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Menu } from "lucide-react";
