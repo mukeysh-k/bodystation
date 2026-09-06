@@ -91,7 +91,7 @@ export default function NotificationBell() {
 
             {!loading && totalCount === 0 && (
               <p className="px-4 py-6 text-center text-sm text-stone-400">
-                Nobody's due right now. All caught up.
+                Nobody&apos;s due right now. All caught up.
               </p>
             )}
 
