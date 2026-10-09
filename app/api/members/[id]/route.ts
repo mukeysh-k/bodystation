@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { requireAdminApi } from "@/lib/auth";
+import { listMemberCharges } from "@/lib/charge-ledger";
 
 // GET /api/members/[id] — member detail + full history
 export async function GET(
@@ -53,19 +54,19 @@ export async function GET(
     freezes = freezeRows ?? [];
   }
 
-  // Fetch additional charges (water bottle, protein, etc.)
-  const { data: additionalCharges } = await supabaseAdmin
-    .from("additional_charges")
-    .select("*")
-    .eq("member_id", id)
-    .order("bought_date", { ascending: false });
+  let additionalCharges;
+  try {
+    additionalCharges = await listMemberCharges(id);
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 
   return NextResponse.json({
     member,
     periods: periods ?? [],
     payments,
     freezes,
-    additionalCharges: additionalCharges ?? [],
+    additionalCharges,
   });
 }
 

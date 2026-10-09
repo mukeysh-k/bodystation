@@ -70,7 +70,7 @@ function statusBadge(m: Member) {
       </span>
     );
   }
-  if (m.member_status === "active" && m.days_left !== null && m.days_left <= 3) {
+  if (m.member_status === "active" && m.days_left !== null && m.days_left <= 7) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">
         <Clock size={11} />
@@ -114,7 +114,7 @@ function MembersPageContent() {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (activeFilter) params.set("filter", activeFilter);
-    const res = await fetch(`/api/members?${params}`);
+    const res = await fetch(`/api/members?${params}`, { cache: "no-store" });
     const data = await res.json();
     setMembers(Array.isArray(data) ? data : []);
     setLoading(false);
@@ -300,6 +300,7 @@ function MembersPageContent() {
           onAdded={() => {
             setShowAddModal(false);
             load();
+            router.refresh();
           }}
         />
       )}

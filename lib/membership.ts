@@ -1,11 +1,13 @@
 import { supabaseAdmin } from "./supabase";
+import { indiaDate } from "./dates";
 
 /**
  * Adds `days` to a date string (YYYY-MM-DD) and returns YYYY-MM-DD.
+ * Uses UTC calendar math so the result does not shift with the server timezone.
  */
 function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const d = new Date(Date.UTC(year, month - 1, day + days));
   return d.toISOString().split("T")[0];
 }
 
@@ -20,12 +22,14 @@ export async function joinOrRejoin({
   planId,
   startDate,           // defaults to today if not passed
   amountPaid = 0,
+  paidOn,              // defaults to today; renewals pass the renewal date
   previousPeriodId,     // pass this if it's a rejoin, to link history (optional)
 }: {
   memberId: string;
   planId: string;
   startDate?: string;
   amountPaid?: number;
+  paidOn?: string;
   previousPeriodId?: string;
 }) {
   const { data: plan, error: planErr } = await supabaseAdmin
@@ -35,7 +39,7 @@ export async function joinOrRejoin({
     .single();
   if (planErr || !plan) throw new Error("Plan not found");
 
-  const start = startDate ?? new Date().toISOString().split("T")[0];
+  const start = startDate ?? indiaDate();
   const end = addDays(start, plan.duration_days);
 
   const { data, error } = await supabaseAdmin
@@ -56,6 +60,17 @@ export async function joinOrRejoin({
 
   if (error) throw error;
 
+  // The amount collected at join/renew has to land in payments, or the
+  // dashboard revenue total never sees it.
+  if (Number(amountPaid) > 0) {
+    const { error: payErr } = await supabaseAdmin.from("payments").insert({
+      membership_period_id: data.id,
+      amount: amountPaid,
+      paid_on: paidOn ?? indiaDate(),
+    });
+    if (payErr) throw payErr;
+  }
+
   // Make sure member.status is active again
   await supabaseAdmin.from("members").update({ status: "active" }).eq("id", memberId);
 
@@ -63,18 +78,20 @@ export async function joinOrRejoin({
 }
 
 /**
- * SCENARIO 2: Member renews ON TIME (before or on their due date).
- * New period starts the day AFTER the current period's end_date —
- * so their cycle stays continuous, no gap.
+ * SCENARIO 2: Member renews.
+ * The new period starts on `startDate` (today when the admin does not pick one).
+ * A past date is allowed when the renewal is recorded after the member already paid.
  */
 export async function renewOnTime({
   currentPeriodId,
   planId,
   amountPaid = 0,
+  startDate,
 }: {
   currentPeriodId: string;
   planId: string;
   amountPaid?: number;
+  startDate?: string;
 }) {
   const { data: currentPeriod, error } = await supabaseAdmin
     .from("membership_periods")
@@ -83,22 +100,31 @@ export async function renewOnTime({
     .single();
   if (error || !currentPeriod) throw new Error("Current period not found");
 
+  const todayStr = indiaDate();
+  let nextStart: string;
+  if (startDate) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || startDate > todayStr) {
+      throw new Error("Renewal date must be today or earlier.");
+    }
+    nextStart = startDate;
+  } else if (currentPeriod.end_date < todayStr) {
+    nextStart = todayStr;
+  } else {
+    nextStart = addDays(currentPeriod.end_date, 1);
+  }
+
   // Close the old period as expired (naturally completed)
   await supabaseAdmin
     .from("membership_periods")
     .update({ status: "expired" })
     .eq("id", currentPeriodId);
 
-  const todayStr = new Date().toISOString().split("T")[0];
-  // If period already ended in the past, start new cycle from today!
-  const nextStart =
-    currentPeriod.end_date < todayStr ? todayStr : addDays(currentPeriod.end_date, 1);
-
   return joinOrRejoin({
     memberId: currentPeriod.member_id,
     planId,
     startDate: nextStart,
     amountPaid,
+    paidOn: startDate ?? todayStr,
     previousPeriodId: currentPeriodId,
   });
 }
@@ -200,7 +226,7 @@ export async function recordPayment({
     membership_period_id: periodId,
     amount,
     method,
-    paid_on: paidOn ?? new Date().toISOString().split("T")[0],
+    paid_on: paidOn ?? indiaDate(),
   });
 
   const { data: period } = await supabaseAdmin

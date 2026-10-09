@@ -1,4 +1,25 @@
+import { unstable_noStore as noStore } from "next/cache";
+import { chargeAmounts, chargePaymentParentId } from "./charges";
 import { supabaseAdmin } from "./supabase";
+
+const PAGE_SIZE = 1000;
+
+async function fetchAll<T>(
+  build: (
+    from: number,
+    to: number
+  ) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>
+): Promise<T[]> {
+  const rows: T[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await build(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    const batch = data ?? [];
+    rows.push(...batch);
+    if (batch.length < PAGE_SIZE) break;
+  }
+  return rows;
+}
 
 export type NotificationItem = {
   memberId: string;
@@ -17,17 +38,15 @@ export type NotificationItem = {
  * - summary: counts for the dashboard cards
  */
 export async function getDashboardNotifications() {
-  const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
-
-  // Fetch all current member statuses from view
-  const { data: statusRows, error } = await supabaseAdmin
-    .from("member_current_status")
-    .select("*");
-
-  if (error) throw error;
-
-  const rows = statusRows ?? [];
+  noStore();
+  // Fetch all current member statuses from view (page past the 1000-row cap)
+  const rows = await fetchAll<any>((from, to) =>
+    supabaseAdmin
+      .from("member_current_status")
+      .select("*")
+      .order("member_id", { ascending: true })
+      .range(from, to)
+  );
 
   // Due Soon: active members with active period whose end_date is within next 7 days
   const dueSoonRows = rows.filter(
@@ -72,44 +91,52 @@ export async function getDashboardNotifications() {
   // Active Count: count of active members
   const activeCount = rows.filter((m: any) => m.member_status === "active").length;
 
-  // Calculate fees due: plan balance + unpaid store charges
-  const { data: unpaidCharges } = await supabaseAdmin
-    .from("additional_charges")
-    .select("member_id, price")
-    .eq("is_paid", false);
+  // Fees due matches the members list: plan balance on the current period
+  // plus unpaid store charges, for every member.
+  let unpaidCharges: {
+    member_id: string;
+    item_name?: string | null;
+    price: number;
+    amount_paid?: number | null;
+    is_paid?: boolean;
+  }[] = [];
+  try {
+    unpaidCharges = await fetchAll((from, to) =>
+      supabaseAdmin
+        .from("additional_charges")
+        .select("member_id, item_name, price, amount_paid, is_paid")
+        .order("id", { ascending: true })
+        .range(from, to)
+    );
+  } catch (err: any) {
+    if (!String(err?.message || err).includes("amount_paid")) throw err;
+    unpaidCharges = await fetchAll((from, to) =>
+      supabaseAdmin
+        .from("additional_charges")
+        .select("member_id, item_name, price, is_paid")
+        .eq("is_paid", false)
+        .order("id", { ascending: true })
+        .range(from, to)
+    );
+  }
 
   const memberBalanceMap: Record<string, number> = {};
 
   for (const r of rows) {
-    if (r.member_status === "active" && r.balance && Number(r.balance) > 0) {
-      memberBalanceMap[r.member_id] = Number(r.balance);
-    }
+    const planBalance = Number(r.balance || 0);
+    if (planBalance > 0) memberBalanceMap[r.member_id] = planBalance;
   }
 
-  if (unpaidCharges) {
-    for (const c of unpaidCharges) {
-      memberBalanceMap[c.member_id] =
-        (memberBalanceMap[c.member_id] || 0) + Number(c.price);
-    }
+  for (const c of unpaidCharges) {
+    if (chargePaymentParentId(c.item_name)) continue;
+    const pending = chargeAmounts(c).pending;
+    if (pending <= 0) continue;
+    memberBalanceMap[c.member_id] = (memberBalanceMap[c.member_id] || 0) + pending;
   }
 
   const feesDueMembers = Object.keys(memberBalanceMap);
   const feesDueCount = feesDueMembers.length;
   const feesDueTotal = Object.values(memberBalanceMap).reduce((sum, val) => sum + val, 0);
-
-  // Revenue this month
-  const { data: revenueRows } = await supabaseAdmin
-    .from("payments")
-    .select("amount, paid_on")
-    .gte(
-      "paid_on",
-      new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split("T")[0]
-    );
-
-  const revenueThisMonth = (revenueRows ?? []).reduce(
-    (sum: number, r: any) => sum + Number(r.amount),
-    0
-  );
 
   return {
     dueSoon,
@@ -121,7 +148,6 @@ export async function getDashboardNotifications() {
       overdueCount: overdue.length,
       feesDueCount,
       feesDueTotal,
-      revenueThisMonth,
     },
   };
 }

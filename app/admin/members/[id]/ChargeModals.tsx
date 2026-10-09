@@ -1,7 +1,27 @@
 "use client";
 
-import { useState } from "react";
-import { X, Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { X, Loader2, Trash2 } from "lucide-react";
+import { indiaDate } from "@/lib/dates";
+import { chargeAmounts } from "@/lib/charges";
+
+type ChargePayment = {
+  id: string;
+  amount: number;
+  paid_on: string;
+};
+
+function rupee(value: number) {
+  return `₹${Number(value || 0).toLocaleString("en-IN")}`;
+}
+
+function formatPayDate(value: string) {
+  const [year, month, day] = value.slice(0, 10).split("-");
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthIndex = Number(month) - 1;
+  if (!year || !day || monthIndex < 0 || monthIndex > 11) return value;
+  return `${Number(day)} ${months[monthIndex]} ${year}`;
+}
 
 export function AddChargeModal({
   memberId,
@@ -16,9 +36,9 @@ export function AddChargeModal({
 }) {
   const [itemName, setItemName] = useState("");
   const [price, setPrice] = useState("");
-  const [boughtDate, setBoughtDate] = useState(new Date().toISOString().split("T")[0]);
-  const [isPaid, setIsPaid] = useState(false);
-  const [paidDate, setPaidDate] = useState(new Date().toISOString().split("T")[0]);
+  const [boughtDate, setBoughtDate] = useState(indiaDate);
+  const [amountPaid, setAmountPaid] = useState("");
+  const [paidDate, setPaidDate] = useState(indiaDate);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -35,8 +55,8 @@ export function AddChargeModal({
           item_name: itemName,
           price: Number(price),
           bought_date: boughtDate,
-          is_paid: isPaid,
-          paid_date: isPaid ? paidDate : null,
+          amount_paid: amountPaid ? Number(amountPaid) : 0,
+          paid_date: amountPaid && Number(amountPaid) > 0 ? paidDate : null,
         }),
       });
 
@@ -106,18 +126,21 @@ export function AddChargeModal({
             </div>
           </div>
 
-          <div className="rounded-lg border border-stone-200 bg-stone-50 p-3 space-y-2">
-            <label className="flex items-center gap-2 text-xs font-medium text-stone-700 cursor-pointer">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-stone-600">Amount paid now (₹)</label>
+              <p className="mb-1 text-[11px] text-stone-400">Leave blank if nothing is paid yet. The rest can be recorded later.</p>
               <input
-                type="checkbox"
-                checked={isPaid}
-                onChange={(e) => setIsPaid(e.target.checked)}
-                className="h-4 w-4 rounded border-stone-300 text-emerald-600 focus:ring-emerald-500"
+                type="number"
+                min="0"
+                step="0.01"
+                value={amountPaid}
+                onChange={(e) => setAmountPaid(e.target.value)}
+                placeholder="0"
+                className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
-              Mark as paid immediately
-            </label>
-
-            {isPaid && (
+            </div>
+            {Number(amountPaid) > 0 && (
               <div>
                 <label className="mb-1 block text-xs font-medium text-stone-600">Paid date</label>
                 <input
@@ -125,7 +148,7 @@ export function AddChargeModal({
                   value={paidDate}
                   onChange={(e) => setPaidDate(e.target.value)}
                   required
-                  className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-emerald-500"
+                  className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none focus:border-emerald-500"
                 />
               </div>
             )}
@@ -158,74 +181,246 @@ export function AddChargeModal({
   );
 }
 
-export function MarkPaidModal({
+export function UpdateChargeModal({
   charge,
   memberId,
   onClose,
-  onDone,
+  onUpdated,
 }: {
-  charge: { id: string; item_name: string; price: number };
+  charge: {
+    id: string;
+    item_name: string;
+    price: number;
+    bought_date: string;
+    amount_paid?: number | null;
+    is_paid: boolean;
+    paid_date?: string | null;
+    payments?: ChargePayment[];
+  };
   memberId: string;
   onClose: () => void;
-  onDone: () => void;
+  onUpdated: (charge: any) => void;
 }) {
-  const [paidDate, setPaidDate] = useState(new Date().toISOString().split("T")[0]);
+  const starting = chargeAmounts(charge);
+  const [itemName, setItemName] = useState(charge.item_name);
+  const [price, setPrice] = useState(String(starting.total));
+  const [boughtDate, setBoughtDate] = useState(charge.bought_date?.slice(0, 10) || indiaDate());
+  const [payments, setPayments] = useState<ChargePayment[]>(charge.payments ?? []);
+  const [payAmount, setPayAmount] = useState("");
+  const [payDate, setPayDate] = useState(indiaDate());
   const [loading, setLoading] = useState(false);
+  const [removingId, setRemovingId] = useState("");
   const [error, setError] = useState("");
+  const saving = useRef(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const total = Number(price || 0);
+  const recorded = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+  const draft = payAmount === "" ? 0 : Number(payAmount);
+  const pending = Number.isFinite(total) ? Math.max(0, total - recorded) : 0;
+  const pendingAfter =
+    Number.isFinite(total) && Number.isFinite(draft) ? Math.max(0, total - recorded - draft) : pending;
+
+  function applyCharge(data: { payments?: ChargePayment[] }, clearPayment: boolean) {
+    setPayments(data.payments ?? []);
+    if (clearPayment) setPayAmount("");
+    onUpdated(data);
+  }
+
+  async function save(payment: { amount: number; paid_on: string } | null) {
+    if (saving.current) return;
     setError("");
+    if (!Number.isFinite(total) || total < 0) {
+      setError("Total amount must be zero or more.");
+      return;
+    }
+    if (payment && payment.amount > pending + 0.001) {
+      setError(`This payment is more than the pending ${rupee(pending)}.`);
+      return;
+    }
+    saving.current = true;
     setLoading(true);
-
     try {
       const res = await fetch(`/api/members/${memberId}/charges`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           charge_id: charge.id,
-          is_paid: true,
-          paid_date: paidDate,
+          item_name: itemName,
+          price: total,
+          bought_date: boughtDate,
+          payment,
         }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update charge");
-
-      onDone();
+      applyCharge(data, payment !== null);
     } catch (err: any) {
       setError(err.message);
     } finally {
+      saving.current = false;
       setLoading(false);
     }
   }
 
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (payAmount !== "" && Number(payAmount) > 0) {
+      await save({ amount: Number(payAmount), paid_on: payDate });
+      return;
+    }
+    await save(null);
+  }
+
+  async function removePayment(payment: ChargePayment) {
+    if (!confirm(`Remove the ${rupee(Number(payment.amount))} payment from ${formatPayDate(payment.paid_on)}?`)) {
+      return;
+    }
+    setError("");
+    setRemovingId(payment.id);
+    try {
+      const res = await fetch(
+        `/api/members/${memberId}/charges?paymentId=${encodeURIComponent(payment.id)}`,
+        { method: "DELETE" }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to remove payment");
+      applyCharge(data, false);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setRemovingId("");
+    }
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-2xl border border-stone-200 bg-white shadow-2xl p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold text-stone-800">Record payment</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-stone-200 bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-stone-100 px-6 py-4">
+          <h3 className="text-base font-semibold text-stone-800">Update charge</h3>
           <button onClick={onClose} className="rounded-lg p-1 text-stone-400 hover:bg-stone-100">
             <X size={18} />
           </button>
         </div>
 
-        <p className="text-sm text-stone-600">
-          Marking <span className="font-semibold text-stone-800">{charge.item_name}</span> (₹
-          {Number(charge.price).toLocaleString("en-IN")}) as paid.
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 p-6">
           <div>
-            <label className="mb-1 block text-xs font-medium text-stone-600">Paid date *</label>
+            <label className="mb-1 block text-xs font-medium text-stone-600">Item name</label>
             <input
-              type="date"
-              value={paidDate}
-              onChange={(e) => setPaidDate(e.target.value)}
+              type="text"
+              value={itemName}
+              onChange={(e) => setItemName(e.target.value)}
               required
               className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none focus:border-emerald-500"
             />
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-stone-600">Total amount (₹)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                required
+                className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none focus:border-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-stone-600">Bought date</label>
+              <input
+                type="date"
+                value={boughtDate}
+                onChange={(e) => setBoughtDate(e.target.value)}
+                required
+                className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none focus:border-emerald-500"
+              />
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm">
+            <p className="flex justify-between text-stone-600">
+              <span>Total</span>
+              <span>{rupee(total)}</span>
+            </p>
+            <p className="mt-1 flex justify-between text-emerald-700">
+              <span>Paid</span>
+              <span>{rupee(recorded)}</span>
+            </p>
+            {draft > 0 && (
+              <p className="mt-1 flex justify-between text-emerald-700">
+                <span>This payment</span>
+                <span>{rupee(draft)}</span>
+              </p>
+            )}
+            <p className="mt-1 flex justify-between font-semibold text-red-600">
+              <span>Pending</span>
+              <span>{rupee(draft > 0 ? pendingAfter : pending)}</span>
+            </p>
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-medium text-stone-600">Payment history</p>
+            {payments.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-stone-200 px-3 py-2.5 text-xs text-stone-400">
+                No payments yet.
+              </p>
+            ) : (
+              <ul className="divide-y divide-stone-100 rounded-lg border border-stone-200">
+                {payments.map((payment) => (
+                  <li key={payment.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                    <span className="text-stone-500">{formatPayDate(payment.paid_on)}</span>
+                    <span className="font-medium text-stone-800">{rupee(Number(payment.amount))}</span>
+                    <button
+                      type="button"
+                      onClick={() => removePayment(payment)}
+                      disabled={loading || removingId === payment.id}
+                      className="rounded p-1 text-stone-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                      title="Remove payment"
+                    >
+                      {removingId === payment.id ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={14} />
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {pending > 0 && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-stone-600">Add payment (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max={pending}
+                  step="0.01"
+                  value={payAmount}
+                  onChange={(e) => setPayAmount(e.target.value)}
+                  placeholder="0"
+                  className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none focus:border-emerald-500"
+                />
+                <p className="mt-1 text-[11px] text-stone-400">
+                  Adds this amount. Earlier payments stay in the history.
+                </p>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-stone-600">Payment date</label>
+                <input
+                  type="date"
+                  value={payDate}
+                  max={indiaDate()}
+                  onChange={(e) => setPayDate(e.target.value)}
+                  className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+          )}
 
           {error && <p className="text-xs text-red-600">{error}</p>}
 
@@ -235,16 +430,26 @@ export function MarkPaidModal({
               onClick={onClose}
               className="rounded-lg border border-stone-200 px-3.5 py-2 text-xs font-medium text-stone-600 hover:bg-stone-50"
             >
-              Cancel
+              {payAmount ? "Close" : "Cancel"}
             </button>
             <button
-              type="submit"
+              type="button"
+              onClick={() => save(null)}
               disabled={loading}
-              className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+              className="rounded-lg border border-stone-200 px-3.5 py-2 text-xs font-medium text-stone-700 hover:bg-stone-50 disabled:opacity-60"
             >
-              {loading && <Loader2 size={12} className="animate-spin" />}
-              Confirm paid
+              Save details
             </button>
+            {pending > 0 && (
+              <button
+                type="submit"
+                disabled={loading || !(Number(payAmount) > 0)}
+                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+              >
+                {loading && <Loader2 size={12} className="animate-spin" />}
+                Record payment
+              </button>
+            )}
           </div>
         </form>
       </div>

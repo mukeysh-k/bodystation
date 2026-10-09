@@ -1,11 +1,15 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { getDashboardNotifications } from "@/lib/notifications";
 import NotificationBell from "@/components/NotificationBell";
 import Link from "next/link";
-import { Users, Clock, AlertCircle, IndianRupee, ArrowRight, ShoppingBag } from "lucide-react";
+import { Users, Clock, AlertCircle, IndianRupee, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 export default async function DashboardPage() {
+  noStore();
   const { summary } = await getDashboardNotifications();
 
   return (
@@ -18,7 +22,7 @@ export default async function DashboardPage() {
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-5xl space-y-6">
           {/* Top Cards Grid */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Link href="/admin/members?filter=active" className="block group">
               <SummaryCard
                 label="Active Members"
@@ -57,21 +61,11 @@ export default async function DashboardPage() {
               <SummaryCard
                 label="Due This Week"
                 value={summary.dueSoonCount}
-                subtext="Expiring within 3 days"
+                subtext="Expiring within 7 days"
                 icon={<Clock size={20} className="text-blue-600" />}
                 tone="blue"
               />
             </Link>
-
-            <div className="block">
-              <SummaryCard
-                label="Revenue This Month"
-                value={`₹${summary.revenueThisMonth.toLocaleString("en-IN")}`}
-                subtext="Total payments collected"
-                icon={<IndianRupee size={20} className="text-purple-600" />}
-                tone="purple"
-              />
-            </div>
           </div>
 
           {/* Action Row */}
@@ -114,14 +108,13 @@ function SummaryCard({
   value: string | number;
   subtext?: string;
   icon: React.ReactNode;
-  tone: "emerald" | "danger" | "warning" | "blue" | "purple";
+  tone: "emerald" | "danger" | "warning" | "blue";
 }) {
   const toneMap: Record<string, { card: string; text: string }> = {
     emerald: { card: "border-stone-200 hover:border-emerald-300", text: "text-emerald-700" },
     danger: { card: "border-stone-200 hover:border-red-300", text: "text-red-600" },
     warning: { card: "border-stone-200 hover:border-amber-300", text: "text-amber-600" },
     blue: { card: "border-stone-200 hover:border-blue-300", text: "text-blue-600" },
-    purple: { card: "border-stone-200 hover:border-purple-300", text: "text-purple-600" },
   };
 
   const { card, text } = toneMap[tone];

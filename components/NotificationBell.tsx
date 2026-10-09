@@ -29,7 +29,7 @@ export default function NotificationBell() {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch("/api/notifications");
+      const res = await fetch("/api/notifications", { cache: "no-store" });
       const json = await res.json();
       setData(json);
     } finally {

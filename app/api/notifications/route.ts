@@ -11,7 +11,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const data = await getDashboardNotifications();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: { "Cache-Control": "no-store, max-age=0" },
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

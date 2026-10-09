@@ -5,6 +5,12 @@ import { X, Loader2 } from "lucide-react";
 
 type Plan = { id: string; name: string; duration_days: number; price: number };
 
+function todayInputValue() {
+  const d = new Date();
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return local.toISOString().split("T")[0];
+}
+
 type ActionType = "renew" | "rejoin" | "leave" | "freeze" | "pay";
 
 const ACTION_META: Record<
@@ -13,7 +19,7 @@ const ACTION_META: Record<
 > = {
   renew: {
     title: "🔄 Renew membership",
-    description: "Select a plan and record payment. New period starts the day after the current end date.",
+    description: "Select a plan and the renewal date. The new period starts on that date. Today is filled in. Choose an earlier date if the member already paid and you are recording it late.",
     submitLabel: "Confirm renewal",
     submitColor: "bg-emerald-600 hover:bg-emerald-700",
   },
@@ -62,7 +68,7 @@ export default function ActionModal({
 
   const [plans, setPlans] = useState<Plan[]>([]);
   const [planId, setPlanId] = useState("");
-  const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
+  const [startDate, setStartDate] = useState(todayInputValue);
   const [amountPaid, setAmountPaid] = useState("");
   const [leftOn, setLeftOn] = useState(new Date().toISOString().split("T")[0]);
   const [freezeStart, setFreezeStart] = useState(new Date().toISOString().split("T")[0]);
@@ -101,10 +107,14 @@ export default function ActionModal({
       let body: Record<string, any> = {};
 
       if (type === "renew") {
+        if (startDate > todayInputValue()) {
+          throw new Error("Renewal date must be today or earlier.");
+        }
         body = {
           action: "renew",
           currentPeriodId: periodId,
           planId,
+          startDate,
           amountPaid: amountPaid ? Number(amountPaid) : 0,
         };
       } else if (type === "rejoin") {
@@ -187,17 +197,22 @@ export default function ActionModal({
                   ))}
                 </select>
               </div>
-              {type === "rejoin" && (
-                <div>
-                  <Label>Start date</Label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-              )}
+              <div>
+                <Label>{type === "renew" ? "Renewal date" : "Start date"}</Label>
+                <input
+                  type="date"
+                  value={startDate}
+                  max={type === "renew" ? todayInputValue() : undefined}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  required
+                  className={inputClass}
+                />
+                {type === "renew" && (
+                  <p className="mt-1 text-xs text-stone-400">
+                    Defaults to today. Pick an earlier date if this renewal was already paid.
+                  </p>
+                )}
+              </div>
               <div>
                 <Label>
                   Amount paid (₹){" "}

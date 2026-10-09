@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
 import { requireAdminApi } from "@/lib/auth";
+import { indiaDate } from "@/lib/dates";
+import {
+  createMemberCharge,
+  deleteMemberCharge,
+  removeChargePayment,
+  updateMemberCharge,
+} from "@/lib/charge-ledger";
 
-// POST /api/members/[id]/charges — add additional charge (water bottle, protein, etc.)
+function fail(result: { ok: false; error: string; status: number }) {
+  return NextResponse.json({ error: result.error }, { status: result.status });
+}
+
+// POST /api/members/[id]/charges — add a charge, with an optional first payment
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -10,86 +20,86 @@ export async function POST(
   const guard = await requireAdminApi();
   if (guard instanceof NextResponse) return guard;
 
-  const { id } = params;
   const body = await req.json();
-  const { item_name, price, bought_date, is_paid, paid_date } = body;
+  const { item_name, price, bought_date, is_paid, paid_date, amount_paid } = body;
 
   if (!item_name || price === undefined) {
-    return NextResponse.json(
-      { error: "Item name and price are required." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Item name and price are required." }, { status: 400 });
   }
 
-  const { data, error } = await supabaseAdmin
-    .from("additional_charges")
-    .insert({
-      member_id: id,
-      item_name,
-      price: Number(price),
-      bought_date: bought_date || new Date().toISOString().split("T")[0],
-      is_paid: Boolean(is_paid),
-      paid_date: is_paid ? (paid_date || new Date().toISOString().split("T")[0]) : null,
-    })
-    .select()
-    .single();
+  const total = Number(price);
+  const paid =
+    amount_paid !== undefined && amount_paid !== null && amount_paid !== ""
+      ? Number(amount_paid)
+      : is_paid
+        ? total
+        : 0;
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
+  const result = await createMemberCharge({
+    memberId: params.id,
+    itemName: String(item_name),
+    price: total,
+    boughtDate: bought_date || indiaDate(),
+    amountPaid: paid,
+    paidOn: paid > 0 ? paid_date || indiaDate() : null,
+  });
+  if (!result.ok) return fail(result);
+  return NextResponse.json(result.charge, { status: 201 });
 }
 
-// PATCH /api/members/[id]/charges — update an additional charge (mark as paid/unpaid, change paid_date)
-export async function PATCH(
-  req: NextRequest
-) {
+// PATCH /api/members/[id]/charges — edit the charge and/or add one payment
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireAdminApi();
   if (guard instanceof NextResponse) return guard;
 
   const body = await req.json();
-  const { charge_id, is_paid, paid_date, item_name, price } = body;
+  const { charge_id, item_name, price, bought_date, payment } = body;
 
   if (!charge_id) {
     return NextResponse.json({ error: "Charge ID is required." }, { status: 400 });
   }
 
-  const updates: Record<string, any> = {};
-  if (is_paid !== undefined) {
-    updates.is_paid = Boolean(is_paid);
-    updates.paid_date = is_paid ? (paid_date || new Date().toISOString().split("T")[0]) : null;
+  let nextPayment: { amount: number; paidOn: string } | null = null;
+  if (payment && typeof payment === "object") {
+    nextPayment = {
+      amount: Number(payment.amount),
+      paidOn: payment.paid_on || indiaDate(),
+    };
   }
-  if (item_name !== undefined) updates.item_name = item_name;
-  if (price !== undefined) updates.price = Number(price);
 
-  const { data, error } = await supabaseAdmin
-    .from("additional_charges")
-    .update(updates)
-    .eq("id", charge_id)
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  const result = await updateMemberCharge({
+    memberId: params.id,
+    chargeId: charge_id,
+    itemName: item_name,
+    price: price !== undefined ? Number(price) : undefined,
+    boughtDate: bought_date,
+    payment: nextPayment,
+  });
+  if (!result.ok) return fail(result);
+  return NextResponse.json(result.charge);
 }
 
-// DELETE /api/members/[id]/charges — delete an additional charge
-export async function DELETE(
-  req: NextRequest
-) {
+// DELETE /api/members/[id]/charges?chargeId= — delete the charge
+// DELETE /api/members/[id]/charges?paymentId= — remove one payment from its history
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireAdminApi();
   if (guard instanceof NextResponse) return guard;
 
   const { searchParams } = new URL(req.url);
+  const paymentId = searchParams.get("paymentId");
   const chargeId = searchParams.get("chargeId");
+
+  if (paymentId) {
+    const result = await removeChargePayment(params.id, paymentId);
+    if (!result.ok) return fail(result);
+    return NextResponse.json(result.charge);
+  }
 
   if (!chargeId) {
     return NextResponse.json({ error: "chargeId parameter is required." }, { status: 400 });
   }
 
-  const { error } = await supabaseAdmin
-    .from("additional_charges")
-    .delete()
-    .eq("id", chargeId);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const result = await deleteMemberCharge(params.id, chargeId);
+  if (!result.ok) return fail(result);
   return NextResponse.json({ ok: true });
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { requireAdminApi } from "@/lib/auth";
+import { chargeAmounts, chargePaymentParentId } from "@/lib/charges";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -51,15 +52,33 @@ export async function GET(req: NextRequest) {
   let members = memberRows ?? [];
 
   // Also fetch unpaid additional charges to combine into balance or for fees_due filter
-  const { data: unpaidCharges } = await supabaseAdmin
+  let unpaidCharges: {
+    member_id: string;
+    item_name?: string | null;
+    price: number;
+    amount_paid?: number | null;
+    is_paid?: boolean;
+  }[] | null = null;
+  const withPartial = await supabaseAdmin
     .from("additional_charges")
-    .select("member_id, price")
-    .eq("is_paid", false);
+    .select("member_id, item_name, price, amount_paid, is_paid");
+  if (withPartial.error?.message?.includes("amount_paid")) {
+    const basic = await supabaseAdmin
+      .from("additional_charges")
+      .select("member_id, item_name, price, is_paid")
+      .eq("is_paid", false);
+    unpaidCharges = basic.data;
+  } else {
+    unpaidCharges = withPartial.data;
+  }
 
   const unpaidMap: Record<string, number> = {};
   if (unpaidCharges) {
     for (const c of unpaidCharges) {
-      unpaidMap[c.member_id] = (unpaidMap[c.member_id] || 0) + Number(c.price);
+      if (chargePaymentParentId(c.item_name)) continue;
+      const pending = chargeAmounts(c).pending;
+      if (pending <= 0) continue;
+      unpaidMap[c.member_id] = (unpaidMap[c.member_id] || 0) + pending;
     }
   }
 
@@ -97,7 +116,9 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json(members);
+  return NextResponse.json(members, {
+    headers: { "Cache-Control": "no-store, max-age=0" },
+  });
 }
 
 // POST /api/members — create a new member

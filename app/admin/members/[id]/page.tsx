@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -25,9 +25,10 @@ import ActionModal from "./ActionModal";
 import EditMemberModal from "./EditMemberModal";
 import {
   AddChargeModal,
-  MarkPaidModal,
+  UpdateChargeModal,
   DeleteMemberConfirmModal,
 } from "./ChargeModals";
+import { chargeAmounts } from "@/lib/charges";
 
 type Member = {
   id: string;
@@ -82,9 +83,11 @@ type AdditionalCharge = {
   item_name: string;
   price: number;
   bought_date: string;
+  amount_paid?: number | null;
   is_paid: boolean;
-  paid_date?: string;
+  paid_date?: string | null;
   created_at: string;
+  payments?: { id: string; amount: number; paid_on: string }[];
 };
 
 type MemberDetail = {
@@ -143,21 +146,27 @@ export default function MemberDetailPage() {
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddChargeModal, setShowAddChargeModal] = useState(false);
-  const [markPaidCharge, setMarkPaidCharge] = useState<AdditionalCharge | null>(null);
+  const [editingCharge, setEditingCharge] = useState<AdditionalCharge | null>(null);
   const [showDeleteMemberModal, setShowDeleteMemberModal] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const loadSeq = useRef(0);
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    const seq = ++loadSeq.current;
+    if (!opts?.silent) {
+      setLoading(true);
+      setError("");
+    }
     try {
-      const res = await fetch(`/api/members/${id}`);
+      const res = await fetch(`/api/members/${id}`, { cache: "no-store" });
+      if (seq !== loadSeq.current) return;
       if (!res.ok) throw new Error("Member not found");
       const data = await res.json();
+      if (seq !== loadSeq.current) return;
       setDetail(data);
     } catch (e: any) {
-      setError(e.message);
+      if (seq === loadSeq.current) setError(e.message);
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
   }, [id]);
 
@@ -186,24 +195,6 @@ export default function MemberDetailPage() {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete charge");
-      load();
-    } catch (err: any) {
-      alert(err.message);
-    }
-  }
-
-  async function handleToggleUnpayCharge(charge: AdditionalCharge) {
-    if (!confirm(`Mark "${charge.item_name}" as unpaid?`)) return;
-    try {
-      const res = await fetch(`/api/members/${id}/charges`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          charge_id: charge.id,
-          is_paid: false,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to update charge");
       load();
     } catch (err: any) {
       alert(err.message);
@@ -251,9 +242,10 @@ export default function MemberDetailPage() {
     ? Number(activePeriod.amount_due) - Number(activePeriod.amount_paid)
     : 0;
 
-  const unpaidChargesTotal = additionalCharges
-    .filter((c) => !c.is_paid)
-    .reduce((sum, c) => sum + Number(c.price), 0);
+  const unpaidChargesTotal = additionalCharges.reduce(
+    (sum, c) => sum + chargeAmounts(c).pending,
+    0
+  );
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -279,7 +271,7 @@ export default function MemberDetailPage() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={load}
+            onClick={() => load()}
             className="rounded-lg p-2 text-stone-500 hover:bg-stone-100"
             title="Refresh"
           >
@@ -360,7 +352,7 @@ export default function MemberDetailPage() {
                     ? "neutral"
                     : daysLeft < 0
                     ? "danger"
-                    : daysLeft <= 3
+                    : daysLeft <= 7
                     ? "warning"
                     : "positive"
                 }
@@ -475,45 +467,71 @@ export default function MemberDetailPage() {
                     <tr className="border-b border-stone-100 bg-stone-50 text-left">
                       <th className="px-3 py-2 font-semibold text-stone-600">Item Name</th>
                       <th className="px-3 py-2 font-semibold text-stone-600">Bought Date</th>
-                      <th className="px-3 py-2 font-semibold text-stone-600">Price (₹)</th>
-                      <th className="px-3 py-2 font-semibold text-stone-600">Paid Status</th>
+                      <th className="px-3 py-2 font-semibold text-stone-600">Total</th>
+                      <th className="px-3 py-2 font-semibold text-stone-600">Paid</th>
+                      <th className="px-3 py-2 font-semibold text-stone-600">Pending</th>
+                      <th className="px-3 py-2 font-semibold text-stone-600">Status</th>
                       <th className="px-3 py-2 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-50">
-                    {additionalCharges.map((charge) => (
+                    {additionalCharges.map((charge) => {
+                      const amounts = chargeAmounts(charge);
+                      const status =
+                        amounts.pending <= 0
+                          ? "paid"
+                          : amounts.paid > 0
+                            ? "partial"
+                            : "unpaid";
+                      return (
                       <tr key={charge.id} className="hover:bg-stone-50 transition">
                         <td className="px-3 py-2.5 font-medium text-stone-800">
                           {charge.item_name}
+                          {charge.payments && charge.payments.length > 0 && (
+                            <p className="text-[11px] font-normal text-stone-400">
+                              {charge.payments.length} payment{charge.payments.length === 1 ? "" : "s"}
+                            </p>
+                          )}
                         </td>
                         <td className="px-3 py-2.5 text-stone-500">
                           {formatDate(charge.bought_date)}
                         </td>
                         <td className="px-3 py-2.5 font-semibold text-stone-800">
-                          ₹{Number(charge.price).toLocaleString("en-IN")}
+                          ₹{amounts.total.toLocaleString("en-IN")}
+                        </td>
+                        <td className="px-3 py-2.5 text-emerald-700">
+                          ₹{amounts.paid.toLocaleString("en-IN")}
+                        </td>
+                        <td className="px-3 py-2.5 font-semibold text-red-600">
+                          {amounts.pending > 0
+                            ? `₹${amounts.pending.toLocaleString("en-IN")}`
+                            : "—"}
                         </td>
                         <td className="px-3 py-2.5">
-                          {charge.is_paid ? (
-                            <button
-                              onClick={() => handleToggleUnpayCharge(charge)}
-                              title="Click to mark as unpaid"
-                              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition"
-                            >
+                          {status === "paid" ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
                               <CheckCircle2 size={12} />
                               Paid {charge.paid_date ? `(${formatDate(charge.paid_date)})` : ""}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => setMarkPaidCharge(charge)}
-                              title="Click to mark as paid"
-                              className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-100 transition"
-                            >
+                            </span>
+                          ) : status === "partial" ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
                               <Clock size={12} />
-                              Unpaid — Mark paid
-                            </button>
+                              Partial {charge.paid_date ? `(${formatDate(charge.paid_date)})` : ""}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
+                              <Clock size={12} />
+                              Unpaid
+                            </span>
                           )}
                         </td>
                         <td className="px-3 py-2.5 text-right">
+                          <button
+                            onClick={() => setEditingCharge(charge)}
+                            className="mr-2 rounded-lg border border-stone-200 px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100"
+                          >
+                            Update
+                          </button>
                           <button
                             onClick={() => handleDeleteCharge(charge.id)}
                             className="rounded p-1 text-stone-400 hover:bg-red-50 hover:text-red-600 transition"
@@ -523,7 +541,8 @@ export default function MemberDetailPage() {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -647,6 +666,7 @@ export default function MemberDetailPage() {
           onDone={() => {
             setActionModal(null);
             load();
+            router.refresh();
           }}
         />
       )}
@@ -674,14 +694,16 @@ export default function MemberDetailPage() {
         />
       )}
 
-      {markPaidCharge && (
-        <MarkPaidModal
-          charge={markPaidCharge}
+      {editingCharge && (
+        <UpdateChargeModal
+          key={editingCharge.id}
+          charge={editingCharge}
           memberId={member.id}
-          onClose={() => setMarkPaidCharge(null)}
-          onDone={() => {
-            setMarkPaidCharge(null);
-            load();
+          onClose={() => setEditingCharge(null)}
+          onUpdated={(updated) => {
+            setEditingCharge(updated);
+            load({ silent: true });
+            router.refresh();
           }}
         />
       )}
@@ -746,9 +768,9 @@ function ActionBtn({
 }
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  const [year, month, day] = String(d).slice(0, 10).split("-");
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthIndex = Number(month) - 1;
+  if (!year || !day || monthIndex < 0 || monthIndex > 11) return d;
+  return `${day.padStart(2, "0")} ${months[monthIndex]} ${year}`;
 }

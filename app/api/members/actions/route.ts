@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
           currentPeriodId: body.currentPeriodId,
           planId: body.planId,
           amountPaid: body.amountPaid ?? 0,
+          startDate: body.startDate,
         });
         return NextResponse.json({ ok: true, period: result });
       }
