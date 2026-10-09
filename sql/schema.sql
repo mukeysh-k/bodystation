@@ -131,6 +131,7 @@ create table additional_charges (
   price numeric(10,2) not null,
   bought_date date not null default current_date,
   is_paid boolean not null default false,
+  amount_paid numeric(10,2) not null default 0, -- partial payments stay on this same row
   paid_date date,
   created_at timestamptz default now()
 );
